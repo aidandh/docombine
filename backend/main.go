@@ -10,11 +10,22 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+
+	"github.com/h2non/filetype"
+	"github.com/h2non/filetype/types"
 )
 
 type document struct {
 	Name string
 	Data []byte
+}
+
+var supportedFileTypes = []string{
+	"doc",
+	"docx",
+	"ppt",
+	"pptx",
+	"pdf",
 }
 
 func main() {
@@ -52,13 +63,20 @@ func main() {
 		log.Fatal(err.Error())
 	}
 	docx.Close()
-	err = doc3.convertToPdf()
+
+	// Open the pptx file and convert it to a pdf
+	pptx, err := os.Open("test_files/slideshow.pptx")
 	if err != nil {
 		log.Fatal(err.Error())
 	}
+	doc4, err := fileToDocument(pptx)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+	pptx.Close()
 
-	documents := []*document{doc1, doc2, doc3}
-	combined, err := combinePdfs(documents)
+	documents := []*document{doc1, doc2, doc3, doc4}
+	combined, err := combineDocuments(documents)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
@@ -81,7 +99,7 @@ func fileToDocument(file *os.File) (*document, error) {
 	return &document{Name: name, Data: data}, nil
 }
 
-func combinePdfs(documents []*document) ([]byte, error) {
+func combineDocuments(documents []*document) ([]byte, error) {
 	url := "http://localhost:3000/forms/pdfengines/merge"
 
 	// Create a buffer to hold the multipart form data
@@ -90,6 +108,12 @@ func combinePdfs(documents []*document) ([]byte, error) {
 
 	// Add files to form
 	for i, doc := range documents {
+		if !filetype.IsType(doc.Data, types.Get("pdf")) {
+			err := doc.convertToPdf()
+			if err != nil {
+				return nil, err
+			}
+		}
 		part, err := writer.CreateFormFile(fmt.Sprintf("file%d", i), doc.Name)
 		if err != nil {
 			return nil, err
