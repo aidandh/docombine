@@ -6,6 +6,10 @@ import (
 )
 
 func main() {
+	testFiles()
+}
+
+func testFiles() {
 	// Open the first file
 	file1, err := os.Open("test_files/test1.pdf")
 	if err != nil {
