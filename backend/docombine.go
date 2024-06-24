@@ -8,6 +8,7 @@ import (
 	"log"
 	"mime/multipart"
 	"net/http"
+	"os"
 	"slices"
 	"time"
 
@@ -19,10 +20,16 @@ import (
 const (
 	kilobyte = 1024
 	megabyte = kilobyte * 1024
+
+	maxFiles = 1000
 )
 
 var supportedFileTypes = []string{"pdf", "doc", "docx", "ppt", "pptx"}
 var gotenbergClient = &http.Client{Timeout: 10 * time.Second}
+
+// Environment variables
+var gotenbergUrl string
+var port string
 
 type document struct {
 	Name string
@@ -30,8 +37,23 @@ type document struct {
 }
 
 func main() {
+	// Set environment variables
+	if env := os.Getenv("GOTENBERG_URL"); env == "" {
+		log.Println("GOTENBERG_URL not specified, setting to http://localhost:3000")
+		gotenbergUrl = "http://localhost:3000"
+	} else {
+		gotenbergUrl = env
+	}
+	if env := os.Getenv("PORT"); env == "" {
+		log.Println("PORT not specified, setting to 8080")
+		port = "8080"
+	} else {
+		port = env
+	}
+
 	// Test connection to Gotenberg
-	healthRes, err := gotenbergClient.Get("http://localhost:3000/health")
+	healthUrl := gotenbergUrl + "/health"
+	healthRes, err := gotenbergClient.Get(healthUrl)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
@@ -44,8 +66,8 @@ func main() {
 	r.HandleFunc("/combine", combineHandler).Methods("POST")
 
 	// Start the HTTP server
-	log.Println("Server is listening on port 8080")
-	if err := http.ListenAndServe(":8080", r); err != nil {
+	log.Println("Server is listening on port", port)
+	if err := http.ListenAndServe(":"+port, r); err != nil {
 		log.Fatal(err.Error())
 	}
 }
@@ -61,6 +83,11 @@ func combineHandler(resWriter http.ResponseWriter, request *http.Request) {
 	// Parse files
 	formData := request.MultipartForm
 	files := formData.File["documents"]
+	if len(files) > maxFiles {
+		http.Error(resWriter, "Too many files", http.StatusRequestEntityTooLarge)
+		log.Println(request.RemoteAddr, "error: Too many files")
+		return
+	}
 	var documents []*document
 	for i, fileHeader := range files {
 		// Open file and put into document struct
@@ -87,7 +114,7 @@ func combineHandler(resWriter http.ResponseWriter, request *http.Request) {
 			return
 		}
 		if fileType == types.Unknown || !slices.Contains(supportedFileTypes, fileType.Extension) {
-			http.Error(resWriter, "Unsupported file type", http.StatusInternalServerError)
+			http.Error(resWriter, "Unsupported file type", http.StatusUnsupportedMediaType)
 			log.Println(request.RemoteAddr, "error: Unsupported file type")
 			return
 		}
@@ -123,7 +150,7 @@ func combineHandler(resWriter http.ResponseWriter, request *http.Request) {
 }
 
 func combineDocuments(documents []*document) ([]byte, error) {
-	url := "http://localhost:3000/forms/pdfengines/merge"
+	url := gotenbergUrl + "/forms/pdfengines/merge"
 
 	// Create a buffer to hold the multipart form data
 	var requestBody bytes.Buffer
@@ -161,7 +188,7 @@ func combineDocuments(documents []*document) ([]byte, error) {
 }
 
 func (document *document) convertToPdf() error {
-	url := "http://localhost:3000/forms/libreoffice/convert"
+	url := gotenbergUrl + "/forms/libreoffice/convert"
 
 	// Create a buffer to hold the multipart form data
 	var requestBody bytes.Buffer
