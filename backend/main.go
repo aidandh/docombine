@@ -77,9 +77,12 @@ func combineHandler(resWriter http.ResponseWriter, request *http.Request) {
 			log.Println(request.RemoteAddr, "error:", err.Error())
 			return
 		}
-		if fileType == types.Unknown || slices.Contains(supportedFileTypes, fileType.Extension) {
+		if fileType == types.Unknown || !slices.Contains(supportedFileTypes, fileType.Extension) {
+			// fmt.Println(fileType.Extension)
+			// fmt.Println("fileType == types.Unknown:", fileType == types.Unknown)
+			// fmt.Println("slices.Contains(supportedFileTypes, fileType.Extension):", slices.Contains(supportedFileTypes, fileType.Extension))
 			http.Error(resWriter, "Unsupported file type", http.StatusInternalServerError)
-			log.Println(request.RemoteAddr, "error:", err.Error())
+			log.Println(request.RemoteAddr, "error: Unsupported file type")
 			return
 		}
 		if fileType != types.Get("pdf") {
@@ -110,6 +113,7 @@ func combineHandler(resWriter http.ResponseWriter, request *http.Request) {
 		log.Println(request.RemoteAddr, "error:", err.Error())
 		return
 	}
+	log.Println(request.RemoteAddr, "success, sending combined file")
 }
 
 // func testFiles() {
