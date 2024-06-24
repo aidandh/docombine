@@ -2,11 +2,36 @@ package main
 
 import (
 	"log"
+	"net/http"
 	"os"
+
+	"github.com/gorilla/mux"
 )
 
 func main() {
-	testFiles()
+	// Test connection to Gotenberg
+	healthRes, err := http.Get("http://localhost:3000/health")
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+	if healthRes.StatusCode != 200 {
+		log.Fatal("Gotenberg health check did not return 200")
+	}
+
+	// Create router and API routes
+	r := mux.NewRouter()
+	r.HandleFunc("/api/combine", combineHandler).Methods("POST")
+
+	// Start the HTTP server
+	log.Println("Server is listening on port 8080")
+	err = http.ListenAndServe(":8080", r)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+}
+
+func combineHandler(w http.ResponseWriter, r *http.Request) {
+
 }
 
 func testFiles() {
