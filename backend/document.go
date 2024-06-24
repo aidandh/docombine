@@ -65,7 +65,7 @@ func combineDocuments(documents []*document) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	if response.Status == "200 OK" {
+	if response.StatusCode == 200 {
 		return respBody, nil
 	} else {
 		return nil, errors.New(string(respBody))
@@ -101,7 +101,7 @@ func (document *document) convertToPdf() error {
 	if err != nil {
 		return err
 	}
-	if response.Status == "200 OK" {
+	if response.StatusCode == 200 {
 		document.Name += ".pdf"
 		document.Data = respBody
 		return nil
