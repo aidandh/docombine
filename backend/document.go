@@ -14,15 +14,6 @@ type document struct {
 	Data []byte
 }
 
-// func fileToDocument(file *os.File) (*document, error) {
-// 	data, err := io.ReadAll(file)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	name := filepath.Base(file.Name())
-// 	return &document{Name: name, Data: data}, nil
-// }
-
 func combineDocuments(documents []*document) ([]byte, error) {
 	url := "http://localhost:3000/forms/pdfengines/merge"
 
@@ -32,12 +23,6 @@ func combineDocuments(documents []*document) ([]byte, error) {
 
 	// Add files to form
 	for i, doc := range documents {
-		// if !filetype.IsType(doc.Data, types.Get("pdf")) {
-		// 	err := doc.convertToPdf()
-		// 	if err != nil {
-		// 		return nil, err
-		// 	}
-		// }
 		part, err := writer.CreateFormFile(fmt.Sprintf("file%d", i), doc.Name)
 		if err != nil {
 			return nil, err
