@@ -1,13 +1,14 @@
+const documentList = document.getElementById("document-list");
+const documentUpload = document.getElementById("document-upload");
+
 /* 
  * Document List
  */
-const documentList = document.getElementById("document-list");
 let draggedItem = null;
 documentList.addEventListener("dragstart", (e) => {
     draggedItem = e.target;
     setTimeout(() => {
-        e.target.style.display =
-            "none";
+        e.target.style.display = "none";
     }, 0);
 });
 
@@ -55,9 +56,9 @@ const getDragAfterElement = (container, y) => {
 /* 
  * Document Upload
  */
-const documentUpload = document.getElementById("document-upload");
 documentUpload.addEventListener("change", () => {
     const files = documentUpload.files;
+    documentList.replaceChildren();
     for (let i = 0; i < files.length; i++) {
         const newDocument = document.createElement("li");
         newDocument.setAttribute("draggable", "true");
