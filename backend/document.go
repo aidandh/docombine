@@ -69,7 +69,7 @@ func combineDocuments(documents []*document) ([]byte, error) {
 	if response.Status == "200 OK" {
 		return respBody, nil
 	} else {
-		return nil, errors.New(response.Status)
+		return nil, errors.New(string(respBody))
 	}
 }
 
@@ -108,6 +108,6 @@ func (document *document) convertToPdf() error {
 		document.Data = respBody
 		return nil
 	} else {
-		return errors.New(response.Status)
+		return errors.New(string(respBody))
 	}
 }
