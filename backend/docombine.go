@@ -9,6 +9,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"slices"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/h2non/filetype"
@@ -21,6 +22,7 @@ const (
 )
 
 var supportedFileTypes = []string{"pdf", "doc", "docx", "ppt", "pptx"}
+var gotenbergClient = &http.Client{Timeout: 10 * time.Second}
 
 type document struct {
 	Name string
@@ -29,7 +31,7 @@ type document struct {
 
 func main() {
 	// Test connection to Gotenberg
-	healthRes, err := http.Get("http://localhost:3000/health")
+	healthRes, err := gotenbergClient.Get("http://localhost:3000/health")
 	if err != nil {
 		log.Fatal(err.Error())
 	}
@@ -140,7 +142,7 @@ func combineDocuments(documents []*document) ([]byte, error) {
 	writer.Close()
 
 	// Send the request to Gotenberg
-	response, err := http.Post(url, writer.FormDataContentType(), &requestBody)
+	response, err := gotenbergClient.Post(url, writer.FormDataContentType(), &requestBody)
 	if err != nil {
 		return nil, err
 	}
@@ -176,7 +178,7 @@ func (document *document) convertToPdf() error {
 	writer.Close()
 
 	// Send the request to Gotenberg
-	response, err := http.Post(url, writer.FormDataContentType(), &requestBody)
+	response, err := gotenbergClient.Post(url, writer.FormDataContentType(), &requestBody)
 	if err != nil {
 		return err
 	}
