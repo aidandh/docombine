@@ -24,8 +24,7 @@ func main() {
 
 	// Start the HTTP server
 	log.Println("Server is listening on port 8080")
-	err = http.ListenAndServe(":8080", r)
-	if err != nil {
+	if err := http.ListenAndServe(":8080", r); err != nil {
 		log.Fatal(err.Error())
 	}
 }
@@ -90,8 +89,7 @@ func testFiles() {
 	if err != nil {
 		log.Fatal(err.Error())
 	}
-	_, err = combinedPdf.Write(combined)
-	if err != nil {
+	if _, err := combinedPdf.Write(combined); err != nil {
 		log.Fatal(err.Error())
 	}
 }

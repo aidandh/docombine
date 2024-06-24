@@ -47,8 +47,7 @@ func combineDocuments(documents []*document) ([]byte, error) {
 		if err != nil {
 			return nil, err
 		}
-		_, err = io.Copy(part, bytes.NewReader(doc.Data))
-		if err != nil {
+		if _, err := io.Copy(part, bytes.NewReader(doc.Data)); err != nil {
 			return nil, err
 		}
 	}
@@ -85,8 +84,7 @@ func (document *document) convertToPdf() error {
 	if err != nil {
 		return err
 	}
-	_, err = io.Copy(part, bytes.NewReader(document.Data))
-	if err != nil {
+	if _, err := io.Copy(part, bytes.NewReader(document.Data)); err != nil {
 		return err
 	}
 	writer.Close()
