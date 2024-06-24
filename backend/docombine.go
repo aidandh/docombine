@@ -22,6 +22,7 @@ const (
 	megabyte = kilobyte * 1024
 
 	maxFiles = 1000
+	maxSize  = 50 * megabyte
 )
 
 var supportedFileTypes = []string{"pdf", "doc", "docx", "ppt", "pptx"}
@@ -74,7 +75,7 @@ func main() {
 
 func combineHandler(resWriter http.ResponseWriter, request *http.Request) {
 	// Parse the multipart form
-	if err := request.ParseMultipartForm(20 * megabyte); err != nil { // TODO: figure out best max size for this
+	if err := request.ParseMultipartForm(maxSize); err != nil { // TODO: figure out best max size for this
 		http.Error(resWriter, "Failed to parse multipart form", http.StatusBadRequest)
 		log.Println(request.RemoteAddr, "error:", err.Error())
 		return

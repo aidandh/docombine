@@ -1,5 +1,18 @@
+const MAX_FILES = 1000;
+const MAX_SIZE = 52428800; // 50 MB
+
+const supportedFileTypes = [
+    "pdf",
+    "doc",
+    "docx",
+    "ppt",
+    "pptx"
+];
+
 const documentList = document.getElementById("document-list");
 const documentUpload = document.getElementById("document-upload");
+const error = document.getElementById("error");
+const submitButton = document.getElementById("submit-button");
 
 /* 
  * Document List
@@ -57,12 +70,62 @@ const getDragAfterElement = (container, y) => {
  * Document Upload
  */
 documentUpload.addEventListener("change", () => {
+    resetError();
     const files = documentUpload.files;
+    let totalSize = 0;
     documentList.replaceChildren();
+    if (files.length > MAX_FILES) {
+        setError(`There are too many files (max ${MAX_FILES} files)`);
+        return;
+    }
     for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        if (!supportedFileTypes.includes(getFileExtension(file.name))) {
+            setError(`${file.name} is not a supported file type`);
+            documentList.replaceChildren();
+            break;
+        }
+        totalSize += file.size;
         const newDocument = document.createElement("li");
-        newDocument.setAttribute("draggable", "true");
-        newDocument.innerText = files[i].name;
+        newDocument.draggable = true;
+        newDocument.innerText = file.name;
         documentList.appendChild(newDocument);
     }
+    if (totalSize > MAX_SIZE) {
+        setError(`The combined size of the files is too big (max ${MAX_SIZE / 1024 / 1024} MB)`);
+    }
 }, false);
+
+/*
+ * Error
+ */
+const setError = (message) => {
+    error.innerText = message;
+    submitButton.disabled = true;
+}
+
+const resetError = () => {
+    error.innerText = "";
+    submitButton.disabled = false;
+}
+
+/*
+ * Misc
+ */
+function getFileExtension(filename) {
+    if (filename.startsWith('.')) {
+        const parts = filename.slice(1).split('.');
+        if (parts.length > 1) {
+            return parts.pop();
+        } else {
+            return '';
+        }
+    } else {
+        const parts = filename.split('.');
+        if (parts.length > 1) {
+            return parts.pop();
+        } else {
+            return '';
+        }
+    }
+}
