@@ -14,6 +14,8 @@ const documentUpload = document.getElementById("document-upload");
 const error = document.getElementById("error");
 const submitButton = document.getElementById("submit-button");
 
+let files = {};
+
 /* 
  * Document List
  */
@@ -35,7 +37,16 @@ documentList.addEventListener("dragend", (e) => {
 documentList.addEventListener("dragover", (e) => {
     e.preventDefault();
     const afterElement = getDragAfterElement(documentList, e.clientY);
-    const currentElement = document.querySelector(".dragging");
+    const currentIndex = files.findIndex((file) => file.name === draggedItem.innerText);
+    let replaceIndex = afterElement ?
+        Math.max(files.findIndex((file) => file.name === afterElement.innerText) - 1, 0)
+        : files.length - 1;
+    // if (currentIndex === files.length - 1 && replaceIndex === files.length - 3) {
+    //     replaceIndex++;
+    // }
+    console.log(currentIndex, replaceIndex);
+    console.log(afterElement);
+    // [files[currentIndex], files[replaceIndex]] = [files[replaceIndex], files[currentIndex]];
     if (afterElement == null) {
         documentList.appendChild(draggedItem);
     }
@@ -71,26 +82,25 @@ const getDragAfterElement = (container, y) => {
  */
 documentUpload.addEventListener("change", () => {
     resetError();
-    const files = documentUpload.files;
+    files = Array.from(documentUpload.files).map((file) => file);
     let totalSize = 0;
     documentList.replaceChildren();
     if (files.length > MAX_FILES) {
         setError(`There are too many files (max ${MAX_FILES} files)`);
         return;
     }
-    for (let i = 0; i < files.length; i++) {
-        const file = files[i];
+    files.forEach((file) => {
         if (!supportedFileTypes.includes(getFileExtension(file.name))) {
             setError(`${file.name} is not a supported file type`);
             documentList.replaceChildren();
-            break;
+            return;
         }
         totalSize += file.size;
         const newDocument = document.createElement("li");
         newDocument.draggable = true;
         newDocument.innerText = file.name;
         documentList.appendChild(newDocument);
-    }
+    });
     if (totalSize > MAX_SIZE) {
         setError(`The combined size of the files is too big (max ${MAX_SIZE / 1024 / 1024} MB)`);
     }
@@ -112,7 +122,7 @@ const resetError = () => {
 /*
  * Misc
  */
-function getFileExtension(filename) {
+const getFileExtension = (filename) => {
     if (filename.startsWith('.')) {
         const parts = filename.slice(1).split('.');
         if (parts.length > 1) {
@@ -128,4 +138,13 @@ function getFileExtension(filename) {
             return '';
         }
     }
+}
+
+const getFileIndex = (files, name) => {
+    for (let i = 0; i < files.length; i++) {
+        if (files[i].name === name) {
+            return i;
+        }
+    }
+    return -1;
 }
