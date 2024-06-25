@@ -11,6 +11,8 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -32,6 +34,7 @@ var gotenbergClient = &http.Client{Timeout: 10 * time.Second}
 // Environment variables
 var gotenbergUrl string
 var port string
+var serveFiles bool
 
 type document struct {
 	name string
@@ -46,16 +49,27 @@ type spaHandler struct {
 func main() {
 	// Set environment variables
 	if env := os.Getenv("GOTENBERG_URL"); env == "" {
-		log.Println("GOTENBERG_URL not specified, setting to http://localhost:3000")
 		gotenbergUrl = "http://localhost:3000"
+		log.Println("GOTENBERG_URL not specified, setting to " + gotenbergUrl)
 	} else {
 		gotenbergUrl = env
 	}
 	if env := os.Getenv("PORT"); env == "" {
-		log.Println("PORT not specified, setting to 8080")
 		port = "8080"
+		log.Println("PORT not specified, setting to " + port)
 	} else {
 		port = env
+	}
+	if env := os.Getenv("SERVE_FILES"); env == "" {
+		serveFiles = false
+		log.Println("SERVE_FILES not specified, setting to " + strconv.FormatBool(serveFiles))
+	} else {
+		env = strings.ToLower(env)
+		if env[0] == 't' {
+			serveFiles = true
+		} else {
+			serveFiles = false
+		}
 	}
 
 	// Test connection to Gotenberg
@@ -72,7 +86,9 @@ func main() {
 	router := mux.NewRouter()
 	router.HandleFunc("/combine", combineHandler).Methods("POST")
 	spa := spaHandler{staticPath: "static", indexPath: "index.html"}
-	router.PathPrefix("/").Handler(spa)
+	if serveFiles {
+		router.PathPrefix("/").Handler(spa)
+	}
 
 	// Start the HTTP server
 	log.Println("Server is listening on port", port)
