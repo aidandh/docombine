@@ -9,7 +9,7 @@
 <body>
     <h1>Docombine</h1>
     <p id="error"></p>
-    <form>
+    <form action="/combine" enctype="multipart/form-data" method="post">
         <label for="files">Select files:</label>
         <input type="file" id="document-upload" name="documents" accept=".pdf,.doc,.docx,.ppt,.pptx" multiple><br><br>
         <ul id="document-list">

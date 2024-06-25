@@ -9,6 +9,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"os"
+	"path/filepath"
 	"slices"
 	"time"
 
@@ -33,8 +34,13 @@ var gotenbergUrl string
 var port string
 
 type document struct {
-	Name string
-	Data []byte
+	name string
+	data []byte
+}
+
+type spaHandler struct {
+	staticPath string
+	indexPath  string
 }
 
 func main() {
@@ -62,15 +68,36 @@ func main() {
 		log.Fatal("Gotenberg health check did not return 200")
 	}
 
-	// Create router and API routes
-	r := mux.NewRouter()
-	r.HandleFunc("/combine", combineHandler).Methods("POST")
+	// Create router, API route, and static file server
+	router := mux.NewRouter()
+	router.HandleFunc("/combine", combineHandler).Methods("POST")
+	spa := spaHandler{staticPath: "static", indexPath: "index.html"}
+	router.PathPrefix("/").Handler(spa)
 
 	// Start the HTTP server
 	log.Println("Server is listening on port", port)
-	if err := http.ListenAndServe(":"+port, r); err != nil {
+	if err := http.ListenAndServe(":"+port, router); err != nil {
 		log.Fatal(err.Error())
 	}
+}
+
+func (handler spaHandler) ServeHTTP(resWriter http.ResponseWriter, request *http.Request) {
+	path := filepath.Join(handler.staticPath, request.URL.Path)
+
+	fileInfo, err := os.Stat(path)
+	if os.IsNotExist(err) || fileInfo.IsDir() {
+		// File does not exist or path is a directory, serve index.html
+		http.ServeFile(resWriter, request, filepath.Join(handler.staticPath, handler.indexPath))
+		return
+	}
+	if err != nil {
+		http.Error(resWriter, "File error", http.StatusInternalServerError)
+		log.Println(request.RemoteAddr, "error:", err.Error())
+		return
+	}
+
+	// Serve the static file
+	http.FileServer(http.Dir(handler.staticPath)).ServeHTTP(resWriter, request)
 }
 
 func combineHandler(resWriter http.ResponseWriter, request *http.Request) {
@@ -104,11 +131,11 @@ func combineHandler(resWriter http.ResponseWriter, request *http.Request) {
 			log.Println(request.RemoteAddr, "error:", err.Error())
 			return
 		}
-		document := document{Name: fileHeader.Filename, Data: docData}
+		document := document{name: fileHeader.Filename, data: docData}
 		file.Close()
 
 		// Check file type
-		fileType, err := filetype.Match(document.Data)
+		fileType, err := filetype.Match(document.data)
 		if err != nil {
 			http.Error(resWriter, "Error matching file type", http.StatusInternalServerError)
 			log.Println(request.RemoteAddr, "error:", err.Error())
@@ -128,7 +155,7 @@ func combineHandler(resWriter http.ResponseWriter, request *http.Request) {
 		}
 
 		// Rename the file so Gutenberg combines in the right order
-		document.Name = fmt.Sprintf("%03d.pdf", i)
+		document.name = fmt.Sprintf("%03d.pdf", i)
 
 		documents = append(documents, &document)
 	}
@@ -140,7 +167,7 @@ func combineHandler(resWriter http.ResponseWriter, request *http.Request) {
 		log.Println(request.RemoteAddr, "error:", err.Error())
 		return
 	}
-	resWriter.Header().Set("Content-Disposition", "attachment; filename=file.pdf")
+	resWriter.Header().Set("Content-Disposition", "attachment; filename=combined.pdf")
 	resWriter.Header().Set("Content-Type", "application/pdf")
 	if _, err := io.Copy(resWriter, bytes.NewReader(combined)); err != nil {
 		http.Error(resWriter, "Error forming response", http.StatusInternalServerError) // TODO: check if this overwrites the data currently written
@@ -159,11 +186,11 @@ func combineDocuments(documents []*document) ([]byte, error) {
 
 	// Add files to form
 	for i, doc := range documents {
-		part, err := writer.CreateFormFile(fmt.Sprintf("file%d", i), doc.Name)
+		part, err := writer.CreateFormFile(fmt.Sprintf("file%d", i), doc.name)
 		if err != nil {
 			return nil, err
 		}
-		if _, err := io.Copy(part, bytes.NewReader(doc.Data)); err != nil {
+		if _, err := io.Copy(part, bytes.NewReader(doc.data)); err != nil {
 			return nil, err
 		}
 	}
@@ -196,11 +223,11 @@ func (document *document) convertToPdf() error {
 	writer := multipart.NewWriter(&requestBody)
 
 	// Add file to form
-	part, err := writer.CreateFormFile("file", document.Name)
+	part, err := writer.CreateFormFile("file", document.name)
 	if err != nil {
 		return err
 	}
-	if _, err := io.Copy(part, bytes.NewReader(document.Data)); err != nil {
+	if _, err := io.Copy(part, bytes.NewReader(document.data)); err != nil {
 		return err
 	}
 	writer.Close()
@@ -218,8 +245,8 @@ func (document *document) convertToPdf() error {
 		return err
 	}
 	if response.StatusCode == 200 {
-		document.Name += ".pdf"
-		document.Data = respBody
+		document.name += ".pdf"
+		document.data = respBody
 		return nil
 	} else {
 		return errors.New(string(respBody))
