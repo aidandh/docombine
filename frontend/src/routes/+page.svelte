@@ -97,8 +97,13 @@
     }
 </script>
 
-<div class="container">
-    <h1 class="title">Docombine</h1>
+<div class="header">
+    <h1>Docombine</h1>
+    <p>Combine multiple documents into one PDF document.</p>
+    <p>Supported file types: {SUPPORTED_TYPES.reduce((accumulator, current) => accumulator + ", " + current)}</p>
+    <p>Maximum combined size: {MAX_SIZE / 1024 / 1024} MB</p>
+</div>
+<div class="document-container">
     {#if documents.length === 0}
         <form class="upload-form">
             <!-- TODO: Changing this to a div and getting rid of the form might make styling easier -->
@@ -133,13 +138,16 @@
             />
         </form>
     {:else}
-        <button
-            on:click={handleCombine}
-            disabled={!canSubmit}
-            id="submit-button"
-        >
-            Combine Documents
-        </button>
+        <div class="buttons">
+            <button on:click={() => (documents = [])}> Cancel </button>
+            <button
+                on:click={handleCombine}
+                disabled={!canSubmit}
+                id="submit-button"
+            >
+                Combine Documents
+            </button>
+        </div>
     {/if}
     {#if error === ""}
         <ul class="document-list">
@@ -177,14 +185,30 @@
 <div style="display: none;" class="upload-label on-hover"></div>
 
 <style>
-    /* This CSS is a mess, again probably a better way to do this */
+    /* TODO: make CSS less bad */
 
-    .container {
+    * {
+        font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .header {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        height: 5vh;
+    }
+
+    .header * {
+        margin: 5px;
+    }
+
+    .document-container {
         display: flex;
         justify-content: center;
         align-items: center;
         flex-direction: column;
-        height: 100vh;
+        height: 80vh;
+        padding-top: 10vh;
     }
 
     .upload-form {
@@ -210,21 +234,36 @@
     .document-list {
         list-style-type: none;
         padding-left: 0px;
-        width: 100%;
+        height: 50%;
+        width: 30%;
         display: flex;
         flex-direction: column;
         align-items: center;
+        overflow: scroll;
     }
 
     .document {
         border: 1px solid black;
         margin: 5px;
         padding: 10px;
-        width: 30%;
+        width: 90%;
         text-align: center;
+        border-radius: 15px;
     }
 
     .document:hover {
         cursor: grab;
+    }
+
+    button {
+        background-color: white;
+        border: 1px solid black;
+        border-radius: 5px;
+        padding: 5px;
+    }
+
+    button:not(:disabled):hover {
+        cursor: pointer;
+        background-color: lightgray;
     }
 </style>
