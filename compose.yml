@@ -1,0 +1,9 @@
+services:
+  gotenberg:
+    image: gotenberg/gotenberg:8
+  docombine:
+    image: docombine
+    ports:
+      - "8080:8080"
+    depends_on:
+      - gotenberg
