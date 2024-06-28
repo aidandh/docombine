@@ -14,7 +14,12 @@
     let hoveringIndex: number | null = null;
     $: {
         const swap = () => {
-            if (draggingIndex === null || hoveringIndex === null || draggingIndex === hoveringIndex) return;
+            if (
+                draggingIndex === null ||
+                hoveringIndex === null ||
+                draggingIndex === hoveringIndex
+            )
+                return;
             [documents[draggingIndex], documents[hoveringIndex]] = [
                 documents[hoveringIndex],
                 documents[draggingIndex],
@@ -72,7 +77,10 @@
         type="file"
         id="document-upload"
         name="documents"
-        accept=".pdf,.doc,.docx,.ppt,.pptx"
+        accept={SUPPORTED_TYPES.reduce(
+            (accumulator, current) => accumulator + "." + current + ",",
+            "",
+        )}
         multiple
     />
     <br />
@@ -80,7 +88,7 @@
         {#each documents as document, index (document)}
             <li
                 draggable="true"
-                style="{dragging?.name === document.name ? "opacity : 0;" : ""}"
+                style={dragging?.name === document.name ? "opacity : 0;" : ""}
                 on:dragstart={(e) => {
                     dragging = document;
                     draggingIndex = index;
