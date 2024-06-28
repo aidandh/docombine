@@ -1,0 +1,1 @@
+docker build --tag 'docombine' . && docker compose up
