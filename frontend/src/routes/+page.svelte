@@ -97,74 +97,134 @@
     }
 </script>
 
-<h1>Docombine</h1>
-<form>
-    <label
-        for="document-upload"
-        id="upload-label"
-        on:dragover|preventDefault={(e) =>
-            (e.currentTarget.style.borderStyle = "solid")}
-        on:dragleave={(e) => (e.currentTarget.style.borderStyle = "dashed")}
-        on:drop|preventDefault={(e) =>
-            e.dataTransfer &&
-            handleFileUpload(Array.from(e.dataTransfer.files))}
-    >
-        Drag files here or click to upload
-    </label>
-    <input
-        on:change={(e) =>
-            e.currentTarget.files &&
-            handleFileUpload(Array.from(e.currentTarget.files))}
-        type="file"
-        id="document-upload"
-        name="documents"
-        accept={SUPPORTED_TYPES.reduce(
-            (accumulator, current) => accumulator + "." + current + ",",
-            "",
-        )}
-        multiple
-    />
-    <br />
-    <ul id="document-list">
-        {#each documents as document, index (document)}
-            <li
-                class="document"
-                draggable="true"
-                style={dragging?.name === document.name ? "opacity : 0;" : ""}
-                on:dragstart={(e) => {
-                    canSubmit = true;
-                    dragging = document;
-                    draggingIndex = index;
-                }}
-                on:dragover={(e) => {
-                    hoveringIndex = index;
-                }}
-                on:dragend={(e) => {
-                    dragging = null;
-                    draggingIndex = null;
-                    hoveringIndex = null;
+<div class="container">
+    <h1 class="title">Docombine</h1>
+    {#if documents.length === 0}
+        <form class="upload-form">
+            <!-- TODO: Changing this to a div and getting rid of the form might make styling easier -->
+            <label
+                for="document-upload"
+                class="upload-label"
+                on:dragover|preventDefault={(e) =>
+                    e.currentTarget.classList.add("on-hover")}
+                on:dragleave={(e) =>
+                    e.currentTarget.classList.remove("on-hover")}
+                on:drop|preventDefault={(e) => {
+                    e.currentTarget.classList.remove("on-hover");
+                    e.dataTransfer &&
+                        handleFileUpload(Array.from(e.dataTransfer.files));
                 }}
             >
-                {document.name}
-            </li>
-        {/each}
-    </ul>
-    <p id="error">{error}</p>
-    <input
-        on:click|preventDefault={handleCombine}
-        disabled={!canSubmit}
-        id="submit-button"
-        type="submit"
-        value="Combine Documents"
-    />
-</form>
+                Drag files here or click to upload
+            </label>
+            <input
+                on:change={(e) =>
+                    e.currentTarget.files &&
+                    handleFileUpload(Array.from(e.currentTarget.files))}
+                type="file"
+                id="document-upload"
+                class="document-upload"
+                name="documents"
+                accept={SUPPORTED_TYPES.reduce(
+                    (accumulator, current) => accumulator + "." + current + ",",
+                    "",
+                )}
+                multiple
+            />
+        </form>
+    {:else}
+        <button
+            on:click={handleCombine}
+            disabled={!canSubmit}
+            id="submit-button"
+        >
+            Combine Documents
+        </button>
+    {/if}
+    {#if error === ""}
+        <ul class="document-list">
+            {#each documents as document, index (document)}
+                <li
+                    class="document"
+                    draggable="true"
+                    style={dragging?.name === document.name
+                        ? "opacity : 0;"
+                        : ""}
+                    on:dragstart={(e) => {
+                        canSubmit = true;
+                        dragging = document;
+                        draggingIndex = index;
+                    }}
+                    on:dragover={() => {
+                        hoveringIndex = index;
+                    }}
+                    on:dragend={() => {
+                        dragging = null;
+                        draggingIndex = null;
+                        hoveringIndex = null;
+                    }}
+                >
+                    {document.name}
+                </li>
+            {/each}
+        </ul>
+    {:else}
+        <p>{error}</p>
+    {/if}
+</div>
+
+<!-- to prevent style culling, probably a better way to do this -->
+<div style="display: none;" class="upload-label on-hover"></div>
 
 <style>
-    #document-upload {
+    /* This CSS is a mess, again probably a better way to do this */
+
+    .container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        height: 100vh;
+    }
+
+    .upload-form {
+        padding-top: 52px;
+        padding-bottom: 52px;
+    }
+
+    .document-upload {
         display: none;
     }
 
-    #upload-label {
+    .upload-label {
+        box-sizing: border-box;
         border: 2px dashed black;
+        padding: 50px;
+        border-radius: 25px;
+    }
+
+    .upload-label.on-hover {
+        border-style: solid;
+    }
+
+    .document-list {
+        list-style-type: none;
+        padding-left: 0px;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .document {
+        border: 1px solid black;
+        margin: 5px;
+        padding: 10px;
+        width: 30%;
+        text-align: center;
+    }
+
+    .document:hover {
+        cursor: grab;
     }
 </style>
