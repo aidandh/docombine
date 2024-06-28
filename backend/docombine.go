@@ -120,6 +120,9 @@ func combineHandler(resWriter http.ResponseWriter, request *http.Request) {
 	// Set CORS
 	resWriter.Header().Set("Access-Control-Allow-Origin", "*")
 
+	// Limit the size of the request body
+	request.Body = http.MaxBytesReader(resWriter, request.Body, maxSize)
+
 	// Parse the multipart form
 	if err := request.ParseMultipartForm(maxSize); err != nil { // TODO: figure out best max size for this
 		http.Error(resWriter, "Failed to parse multipart form", http.StatusBadRequest)

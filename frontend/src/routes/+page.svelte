@@ -2,7 +2,8 @@
 
 <script lang="ts">
     const MAX_FILES = 1000;
-    const MAX_SIZE = 52428800; // 50 MB
+    // const MAX_SIZE = 100 * 1024 * 1024; // 100 MB
+    const MAX_SIZE = 50 * 1024 * 1024;
     const SUPPORTED_TYPES = ["pdf", "doc", "docx", "ppt", "pptx"];
 
     let documents: File[] = [];
