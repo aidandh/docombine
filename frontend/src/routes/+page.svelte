@@ -9,8 +9,20 @@
     let canSubmit = false;
     let error = "";
 
+    let dragging: File | null = null;
     let draggingIndex: number | null = null;
     let hoveringIndex: number | null = null;
+    $: {
+        const swap = () => {
+            if (draggingIndex === null || hoveringIndex === null || draggingIndex === hoveringIndex) return;
+            [documents[draggingIndex], documents[hoveringIndex]] = [
+                documents[hoveringIndex],
+                documents[draggingIndex],
+            ];
+            draggingIndex = hoveringIndex;
+        };
+        swap();
+    }
 
     function handleFileUpload(files: File[]) {
         error = "";
@@ -68,18 +80,16 @@
         {#each documents as document, index (document)}
             <li
                 draggable="true"
+                style="{dragging?.name === document.name ? "opacity : 0;" : ""}"
                 on:dragstart={(e) => {
+                    dragging = document;
                     draggingIndex = index;
                 }}
                 on:dragover={(e) => {
                     hoveringIndex = index;
                 }}
                 on:dragend={(e) => {
-                    if (draggingIndex === null || hoveringIndex === null) return;
-                    [documents[draggingIndex], documents[hoveringIndex]] = [
-                        documents[hoveringIndex],
-                        documents[draggingIndex],
-                    ];
+                    dragging = null;
                     draggingIndex = null;
                     hoveringIndex = null;
                 }}
@@ -97,5 +107,6 @@
     />
 </form>
 
+<p>dragging?.name: {dragging?.name}</p>
 <p>draggingIndex: {draggingIndex}</p>
 <p>hoveringIndex: {hoveringIndex}</p>
