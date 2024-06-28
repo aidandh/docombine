@@ -2,7 +2,6 @@
 
 <script lang="ts">
     const MAX_FILES = 1000;
-    // const MAX_SIZE = 100 * 1024 * 1024; // 100 MB
     const MAX_SIZE = 50 * 1024 * 1024;
     const SUPPORTED_TYPES = ["pdf", "doc", "docx", "ppt", "pptx"];
 
@@ -87,6 +86,11 @@
         }
     }
 
+    function handleCancel() {
+        documents = [];
+        error = "";
+    }
+
     function getFileExtension(filename: string) {
         let parts: string[];
         if (filename.startsWith(".")) {
@@ -101,7 +105,11 @@
 <div class="header">
     <h1>Docombine</h1>
     <p>Combine multiple documents into one PDF document.</p>
-    <p>Supported file types: {SUPPORTED_TYPES.reduce((accumulator, current) => accumulator + ", " + current)}</p>
+    <p>
+        Supported file types: {SUPPORTED_TYPES.reduce(
+            (accumulator, current) => accumulator + ", " + current,
+        )}
+    </p>
     <p>Maximum combined size: {MAX_SIZE / 1024 / 1024} MB</p>
 </div>
 <div class="document-container">
@@ -140,7 +148,7 @@
         </form>
     {:else}
         <div class="buttons">
-            <button on:click={() => (documents = [])}> Cancel </button>
+            <button on:click={handleCancel}> Cancel </button>
             <button
                 on:click={handleCombine}
                 disabled={!canSubmit}
@@ -189,7 +197,7 @@
     /* TODO: make CSS less bad */
 
     * {
-        font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
     }
 
     .header {
