@@ -104,6 +104,7 @@ func (handler spaHandler) ServeHTTP(resWriter http.ResponseWriter, request *http
 	if os.IsNotExist(err) || fileInfo.IsDir() {
 		// File does not exist or path is a directory, serve index.html
 		http.ServeFile(resWriter, request, filepath.Join(handler.staticPath, handler.indexPath))
+		log.Println(request.RemoteAddr, "serving", handler.staticPath+"/"+handler.indexPath)
 		return
 	}
 	if err != nil {
@@ -114,6 +115,7 @@ func (handler spaHandler) ServeHTTP(resWriter http.ResponseWriter, request *http
 
 	// Serve the static file
 	http.FileServer(http.Dir(handler.staticPath)).ServeHTTP(resWriter, request)
+	log.Println(request.RemoteAddr, "serving", handler.staticPath+request.RequestURI)
 }
 
 func combineHandler(resWriter http.ResponseWriter, request *http.Request) {
