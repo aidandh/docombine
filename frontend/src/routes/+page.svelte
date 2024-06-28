@@ -56,6 +56,35 @@
         documents = files;
     }
 
+    async function handleCombine() {
+        canSubmit = false;
+        const request = new FormData();
+        documents.forEach((document) => request.append("documents", document));
+        try {
+            const res = await fetch("http://localhost:8080/combine", {
+                method: "POST",
+                body: request,
+            });
+            if (!res.ok) {
+                error = await res.text();
+                canSubmit = true;
+                return;
+            }
+            const blob = await res.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "combined.pdf";
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        } catch (err) {
+            error = err as string;
+            canSubmit = true;
+        }
+    }
+
     function getFileExtension(filename: string) {
         let parts: string[];
         if (filename.startsWith(".")) {
@@ -90,6 +119,7 @@
                 draggable="true"
                 style={dragging?.name === document.name ? "opacity : 0;" : ""}
                 on:dragstart={(e) => {
+                    canSubmit = true;
                     dragging = document;
                     draggingIndex = index;
                 }}
@@ -108,13 +138,10 @@
     </ul>
     <p id="error">{error}</p>
     <input
+        on:click|preventDefault={handleCombine}
         disabled={!canSubmit}
         id="submit-button"
         type="submit"
         value="Combine Documents"
     />
 </form>
-
-<p>dragging?.name: {dragging?.name}</p>
-<p>draggingIndex: {draggingIndex}</p>
-<p>hoveringIndex: {hoveringIndex}</p>

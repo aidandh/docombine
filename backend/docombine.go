@@ -117,6 +117,9 @@ func (handler spaHandler) ServeHTTP(resWriter http.ResponseWriter, request *http
 }
 
 func combineHandler(resWriter http.ResponseWriter, request *http.Request) {
+	// Set CORS
+	resWriter.Header().Set("Access-Control-Allow-Origin", "*")
+
 	// Parse the multipart form
 	if err := request.ParseMultipartForm(maxSize); err != nil { // TODO: figure out best max size for this
 		http.Error(resWriter, "Failed to parse multipart form", http.StatusBadRequest)
