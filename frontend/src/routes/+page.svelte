@@ -31,6 +31,7 @@
 
     function handleFileUpload(files: File[]) {
         error = "";
+        documents = [];
         if (files.length > MAX_FILES) {
             error = "Too many documents";
             return;
@@ -98,7 +99,18 @@
 
 <h1>Docombine</h1>
 <form>
-    <label for="files">Select files:</label>
+    <label
+        for="document-upload"
+        id="upload-label"
+        on:dragover|preventDefault={(e) =>
+            (e.currentTarget.style.borderStyle = "solid")}
+        on:dragleave={(e) => (e.currentTarget.style.borderStyle = "dashed")}
+        on:drop|preventDefault={(e) =>
+            e.dataTransfer &&
+            handleFileUpload(Array.from(e.dataTransfer.files))}
+    >
+        Drag files here or click to upload
+    </label>
     <input
         on:change={(e) =>
             e.currentTarget.files &&
@@ -116,6 +128,7 @@
     <ul id="document-list">
         {#each documents as document, index (document)}
             <li
+                class="document"
                 draggable="true"
                 style={dragging?.name === document.name ? "opacity : 0;" : ""}
                 on:dragstart={(e) => {
@@ -145,3 +158,13 @@
         value="Combine Documents"
     />
 </form>
+
+<style>
+    #document-upload {
+        display: none;
+    }
+
+    #upload-label {
+        border: 2px dashed black;
+    }
+</style>
