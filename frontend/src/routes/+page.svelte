@@ -1,3 +1,5 @@
+<!-- Draggable list adapted from https://svelte.dev/repl/e62f83d69cea4fda9e8a897f50b5a67c?version=4.2.18 -->
+
 <script lang="ts">
     const MAX_FILES = 1000;
     const MAX_SIZE = 52428800; // 50 MB
@@ -7,18 +9,30 @@
     let canSubmit = false;
     let error = "";
 
+    let draggingIndex: number | null = null;
+    let hoveringIndex: number | null = null;
+
     function handleFileUpload(files: File[]) {
         error = "";
         if (files.length > MAX_FILES) {
             error = "Too many documents";
             return;
         }
-        if (files.reduce((accumulator, current) => accumulator + current.size, 0) > MAX_SIZE) {
+        if (
+            files.reduce(
+                (accumulator, current) => accumulator + current.size,
+                0,
+            ) > MAX_SIZE
+        ) {
             error = "Documents exceed maximum size";
             return;
         }
-        if (!files.map((file) => getFileExtension(file.name)).every((ext) => SUPPORTED_TYPES.includes(ext))) {
-            error = "File type not supported"
+        if (
+            !files
+                .map((file) => getFileExtension(file.name))
+                .every((ext) => SUPPORTED_TYPES.includes(ext))
+        ) {
+            error = "File type not supported";
             return;
         }
         canSubmit = true;
@@ -51,8 +65,27 @@
     />
     <br />
     <ul id="document-list">
-        {#each documents as document}
-            <li>{document.name}</li>
+        {#each documents as document, index (document)}
+            <li
+                draggable="true"
+                on:dragstart={(e) => {
+                    draggingIndex = index;
+                }}
+                on:dragover={(e) => {
+                    hoveringIndex = index;
+                }}
+                on:dragend={(e) => {
+                    if (draggingIndex === null || hoveringIndex === null) return;
+                    [documents[draggingIndex], documents[hoveringIndex]] = [
+                        documents[hoveringIndex],
+                        documents[draggingIndex],
+                    ];
+                    draggingIndex = null;
+                    hoveringIndex = null;
+                }}
+            >
+                {document.name}
+            </li>
         {/each}
     </ul>
     <p id="error">{error}</p>
@@ -63,3 +96,6 @@
         value="Combine Documents"
     />
 </form>
+
+<p>draggingIndex: {draggingIndex}</p>
+<p>hoveringIndex: {hoveringIndex}</p>
