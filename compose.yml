@@ -2,6 +2,7 @@ services:
   gotenberg:
     image: gotenberg/gotenberg:8
   docombine:
+    build: .
     image: docombine
     ports:
       - "8080:8080"
