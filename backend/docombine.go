@@ -80,7 +80,7 @@ func logRequest(request *http.Request, message string) {
 
 func notFoundHandler(resWriter http.ResponseWriter, request *http.Request) {
 	http.Error(resWriter, "404 page not found", http.StatusNotFound)
-	logRequest(request, "404 page not found")
+	logRequest(request, "error: 404 page not found")
 }
 
 func combineHandler(resWriter http.ResponseWriter, request *http.Request) {

@@ -1,9 +1,12 @@
 <!-- Draggable list adapted from https://svelte.dev/repl/e62f83d69cea4fda9e8a897f50b5a67c?version=4.2.18 -->
 
 <script lang="ts">
+    import { dev } from "$app/environment";
+
     const MAX_FILES = 1000;
     const MAX_SIZE = 50 * 1024 * 1024;
     const SUPPORTED_TYPES = ["pdf", "doc", "docx", "ppt", "pptx"];
+    const API_URL = dev ? "http://localhost:8080/combine" : "/combine";
 
     let documents: File[] = [];
     let canSubmit = false;
@@ -62,7 +65,7 @@
         const request = new FormData();
         documents.forEach((document) => request.append("documents", document));
         try {
-            const res = await fetch("/combine", {
+            const res = await fetch(API_URL, {
                 method: "POST",
                 body: request,
             });
