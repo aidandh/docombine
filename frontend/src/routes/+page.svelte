@@ -62,7 +62,7 @@
         const request = new FormData();
         documents.forEach((document) => request.append("documents", document));
         try {
-            const res = await fetch("http://localhost:8080/combine", {
+            const res = await fetch("/combine", {
                 method: "POST",
                 body: request,
             });
