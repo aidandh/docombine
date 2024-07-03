@@ -9,10 +9,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"os"
-	"path/filepath"
 	"slices"
-	"strconv"
-	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -34,16 +31,10 @@ var gotenbergClient = &http.Client{Timeout: 10 * time.Second}
 // Environment variables
 var gotenbergUrl string
 var port string
-var serveFiles bool
 
 type document struct {
 	name string
 	data []byte
-}
-
-type spaHandler struct {
-	staticPath string
-	indexPath  string
 }
 
 func main() {
@@ -60,17 +51,6 @@ func main() {
 	} else {
 		port = env
 	}
-	if env := os.Getenv("SERVE_FILES"); env == "" {
-		serveFiles = false
-		log.Println("SERVE_FILES not specified, setting to " + strconv.FormatBool(serveFiles))
-	} else {
-		env = strings.ToLower(env)
-		if env[0] == 't' {
-			serveFiles = true
-		} else {
-			serveFiles = false
-		}
-	}
 
 	// Test connection to Gotenberg
 	healthUrl := gotenbergUrl + "/health"
@@ -85,37 +65,12 @@ func main() {
 	// Create router, API route, and static file server
 	router := mux.NewRouter()
 	router.HandleFunc("/combine", combineHandler).Methods("POST")
-	spa := spaHandler{staticPath: "static", indexPath: "index.html"}
-	if serveFiles {
-		router.PathPrefix("/").Handler(spa)
-	}
 
 	// Start the HTTP server
 	log.Println("Server is listening on port", port)
 	if err := http.ListenAndServe(":"+port, router); err != nil {
 		log.Fatal(err.Error())
 	}
-}
-
-func (handler spaHandler) ServeHTTP(resWriter http.ResponseWriter, request *http.Request) {
-	path := filepath.Join(handler.staticPath, request.URL.Path)
-
-	fileInfo, err := os.Stat(path)
-	if os.IsNotExist(err) || fileInfo.IsDir() {
-		// File does not exist or path is a directory, serve index.html
-		http.ServeFile(resWriter, request, filepath.Join(handler.staticPath, handler.indexPath))
-		log.Println(request.RemoteAddr, "serving", handler.staticPath+"/"+handler.indexPath)
-		return
-	}
-	if err != nil {
-		http.Error(resWriter, "File error", http.StatusInternalServerError)
-		log.Println(request.RemoteAddr, "error:", err.Error())
-		return
-	}
-
-	// Serve the static file
-	http.FileServer(http.Dir(handler.staticPath)).ServeHTTP(resWriter, request)
-	log.Println(request.RemoteAddr, "serving", handler.staticPath+request.RequestURI)
 }
 
 func combineHandler(resWriter http.ResponseWriter, request *http.Request) {
