@@ -64,6 +64,7 @@ func main() {
 
 	// Create router, API route, and static file server
 	router := mux.NewRouter()
+	router.NotFoundHandler = http.HandlerFunc(notFoundHandler)
 	router.HandleFunc("/combine", combineHandler).Methods("POST")
 
 	// Start the HTTP server
@@ -71,6 +72,11 @@ func main() {
 	if err := http.ListenAndServe(":"+port, router); err != nil {
 		log.Fatal(err.Error())
 	}
+}
+
+func notFoundHandler(resWriter http.ResponseWriter, request *http.Request) {
+	http.Error(resWriter, "404 page not found", http.StatusNotFound)
+	log.Println(request.RemoteAddr, "error: Not found:", request.Method, request.RequestURI)
 }
 
 func combineHandler(resWriter http.ResponseWriter, request *http.Request) {
