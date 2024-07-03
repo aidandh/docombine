@@ -11,4 +11,3 @@ services:
     environment:
       - GOTENBERG_URL=http://gotenberg:3000
       - PORT=8080
-      - SERVE_FILES=true
