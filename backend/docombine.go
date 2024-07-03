@@ -74,9 +74,13 @@ func main() {
 	}
 }
 
+func logRequest(request *http.Request, message string) {
+	log.Printf("[%s] (%s %s) %s\n", request.RemoteAddr, request.Method, request.RequestURI, message)
+}
+
 func notFoundHandler(resWriter http.ResponseWriter, request *http.Request) {
 	http.Error(resWriter, "404 page not found", http.StatusNotFound)
-	log.Println(request.RemoteAddr, "error: Not found:", request.Method, request.RequestURI)
+	logRequest(request, "404 page not found")
 }
 
 func combineHandler(resWriter http.ResponseWriter, request *http.Request) {
@@ -89,7 +93,7 @@ func combineHandler(resWriter http.ResponseWriter, request *http.Request) {
 	// Parse the multipart form
 	if err := request.ParseMultipartForm(maxSize); err != nil { // TODO: figure out best max size for this
 		http.Error(resWriter, "Failed to parse multipart form", http.StatusBadRequest)
-		log.Println(request.RemoteAddr, "error:", err.Error())
+		logRequest(request, "error: "+err.Error())
 		return
 	}
 
@@ -98,7 +102,7 @@ func combineHandler(resWriter http.ResponseWriter, request *http.Request) {
 	files := formData.File["documents"]
 	if len(files) > maxFiles {
 		http.Error(resWriter, "Too many files", http.StatusRequestEntityTooLarge)
-		log.Println(request.RemoteAddr, "error: Too many files")
+		logRequest(request, "error: Too many files")
 		return
 	}
 	var documents []*document
@@ -107,13 +111,13 @@ func combineHandler(resWriter http.ResponseWriter, request *http.Request) {
 		file, err := fileHeader.Open()
 		if err != nil {
 			http.Error(resWriter, "Error opening file", http.StatusInternalServerError)
-			log.Println(request.RemoteAddr, "error:", err.Error())
+			logRequest(request, "error: "+err.Error())
 			return
 		}
 		docData, err := io.ReadAll(file)
 		if err != nil {
 			http.Error(resWriter, "Error reading file", http.StatusInternalServerError)
-			log.Println(request.RemoteAddr, "error:", err.Error())
+			logRequest(request, "error: "+err.Error())
 			return
 		}
 		document := document{name: fileHeader.Filename, data: docData}
@@ -123,18 +127,18 @@ func combineHandler(resWriter http.ResponseWriter, request *http.Request) {
 		fileType, err := filetype.Match(document.data)
 		if err != nil {
 			http.Error(resWriter, "Error matching file type", http.StatusInternalServerError)
-			log.Println(request.RemoteAddr, "error:", err.Error())
+			logRequest(request, "error: "+err.Error())
 			return
 		}
 		if fileType == types.Unknown || !slices.Contains(supportedFileTypes, fileType.Extension) {
 			http.Error(resWriter, "Unsupported file type", http.StatusUnsupportedMediaType)
-			log.Println(request.RemoteAddr, "error: Unsupported file type")
+			logRequest(request, "error: Unsupported file type")
 			return
 		}
 		if fileType != types.Get("pdf") {
 			if err := document.convertToPdf(); err != nil {
 				http.Error(resWriter, "Error converting to PDF", http.StatusInternalServerError)
-				log.Println(request.RemoteAddr, "error:", err.Error())
+				logRequest(request, "error: "+err.Error())
 				return
 			}
 		}
@@ -149,17 +153,17 @@ func combineHandler(resWriter http.ResponseWriter, request *http.Request) {
 	combined, err := combineDocuments(documents)
 	if err != nil {
 		http.Error(resWriter, "Error combining documents", http.StatusInternalServerError)
-		log.Println(request.RemoteAddr, "error:", err.Error())
+		logRequest(request, "error: "+err.Error())
 		return
 	}
 	resWriter.Header().Set("Content-Disposition", "attachment; filename=combined.pdf")
 	resWriter.Header().Set("Content-Type", "application/pdf")
 	if _, err := io.Copy(resWriter, bytes.NewReader(combined)); err != nil {
 		http.Error(resWriter, "Error forming response", http.StatusInternalServerError) // TODO: check if this overwrites the data currently written
-		log.Println(request.RemoteAddr, "error:", err.Error())
+		logRequest(request, "error: "+err.Error())
 		return
 	}
-	log.Println(request.RemoteAddr, "success, sending combined file")
+	logRequest(request, "success")
 }
 
 func combineDocuments(documents []*document) ([]byte, error) {
