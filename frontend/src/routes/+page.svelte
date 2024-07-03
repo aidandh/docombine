@@ -118,7 +118,6 @@
 <div class="document-container">
     {#if documents.length === 0}
         <form class="upload-form">
-            <!-- TODO: Changing this to a div and getting rid of the form might make styling easier -->
             <label
                 for="document-upload"
                 class="upload-label"
@@ -197,8 +196,6 @@
 <div style="display: none;" class="upload-label on-hover"></div>
 
 <style>
-    /* TODO: make CSS less bad */
-
     * {
         font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
     }
@@ -207,7 +204,7 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        height: 5vh;
+        padding: 20px 0;
     }
 
     .header * {
@@ -219,13 +216,12 @@
         justify-content: center;
         align-items: center;
         flex-direction: column;
-        height: 80vh;
-        padding-top: 10vh;
+        /* padding-top: 50px; */
     }
 
     .upload-form {
-        padding-top: 52px;
-        padding-bottom: 52px;
+        padding-top: 50px;
+        padding-bottom: 50px;
     }
 
     .document-upload {
@@ -234,13 +230,15 @@
 
     .upload-label {
         box-sizing: border-box;
-        border: 2px dashed black;
+        border: 2px solid black;
         padding: 50px;
         border-radius: 25px;
+        transition: border-width 0.2s, text-shadow 0.2s;
     }
 
-    .upload-label.on-hover {
-        border-style: solid;
+    .upload-label.on-hover, .upload-label:hover {
+        border-width: 6px;
+        text-shadow: 1px 0px 0px black;
     }
 
     .document-list {
