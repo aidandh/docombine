@@ -46,7 +46,7 @@ func main() {
 		gotenbergUrl = env
 	}
 	if env := os.Getenv("PORT"); env == "" {
-		port = "8080"
+		port = "3000"
 		log.Println("PORT not specified, setting to " + port)
 	} else {
 		port = env

@@ -2,12 +2,15 @@ services:
   gotenberg:
     image: gotenberg/gotenberg:8
   docombine:
-    build: .
-    image: docombine
-    ports:
-      - "8080:8080"
+    build: backend
     depends_on:
       - gotenberg
     environment:
       - GOTENBERG_URL=http://gotenberg:3000
-      - PORT=8080
+      - PORT=3000
+  nginx:
+    build: .
+    depends_on:
+      - docombine
+    ports:
+      - "80:80"
