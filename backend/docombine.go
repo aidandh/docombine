@@ -26,7 +26,7 @@ const (
 )
 
 var supportedFileTypes = []string{"pdf", "doc", "docx", "ppt", "pptx"}
-var gotenbergClient = &http.Client{Timeout: 10 * time.Second}
+var gotenbergClient = &http.Client{Timeout: 30 * time.Second}
 
 // Environment variables
 var gotenbergUrl string
@@ -96,6 +96,7 @@ func combineHandler(resWriter http.ResponseWriter, request *http.Request) {
 		logRequest(request, "error: "+err.Error())
 		return
 	}
+	request.Body.Close()
 
 	// Parse files
 	formData := request.MultipartForm
